@@ -45,9 +45,14 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 
 	switch message.Content {
 	case "!info":
-		session.ChannelMessageSend(message.ChannelID, "This is a norifier bot!")
+		session.ChannelMessageSend(message.ChannelID, "Привет! Это бот напоминатель! ✏📄\n"+
+			"Этот бот умеет ставить напоминалки с различными задачами и временем напоминания. \n\n "+
+			"Основные команды: \n"+
+			"!remind - 'имя напоминания' : 'текст напоминания' : 'время напоминания' ✅\n"+
+			"!remindList - список моих напоминании 📄\n"+
+			"!remindDelete - удалить напоминание по имени -> 'имя' ❌")
 	case "!remind":
-		session.ChannelMessageSend(message.ChannelID, "")
+		session.ChannelMessageSend(message.ChannelID, "Введите имя, текст и время напоминания, разделенные двоеточием. Например: 'Сон:Нужно ложиться спать: 22:00' ✏📄")
 	case "!remindList":
 		session.ChannelMessageSend(message.ChannelID, "")
 	case "!remindCancel":
