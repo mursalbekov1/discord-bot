@@ -43,9 +43,14 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		return
 	}
 
-	if message.Content == "Hello" {
-		session.ChannelMessageSend(message.ChannelID, "world!")
-	} else {
-		session.ChannelMessageSend(message.ChannelID, "The command is not correct!")
+	switch message.Content {
+	case "!info":
+		session.ChannelMessageSend(message.ChannelID, "This is a norifier bot!")
+	case "!remind":
+		session.ChannelMessageSend(message.ChannelID, "")
+	case "!remindList":
+		session.ChannelMessageSend(message.ChannelID, "")
+	case "!remindCancel":
+		session.ChannelMessageSend(message.ChannelID, "")
 	}
 }
