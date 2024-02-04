@@ -77,3 +77,48 @@ func listOfReminders(session *discordgo.Session, message *discordgo.MessageCreat
 		fmt.Println("Error reading db.txt:", err)
 	}
 }
+
+func deleteReminder(session *discordgo.Session, message *discordgo.MessageCreate, nameToDelete string) {
+	filePath := "C:\\Users\\mursa\\OneDrive\\Рабочий стол\\golang project\\discord-bot\\db\\db.txt"
+
+	content, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Println("Error reading db.txt:", err)
+		session.ChannelMessageSend(message.ChannelID, "Произошла ошибка при чтении файла.")
+		return
+	}
+
+	lines := strings.Split(string(content), "\n")
+
+	var newContent string
+	found := false
+
+	for _, line := range lines {
+		fields := strings.Split(line, " - ")
+		if len(fields) != 4 {
+			continue
+		}
+
+		currentName := fields[1]
+		if currentName == nameToDelete {
+			found = true
+			continue // Пропустить строку для удаления
+		}
+
+		newContent += line + "\n"
+	}
+
+	if !found {
+		session.ChannelMessageSend(message.ChannelID, "Напоминание с именем '"+nameToDelete+"' не найдено.")
+		return
+	}
+
+	err = os.WriteFile(filePath, []byte(newContent), 0644)
+	if err != nil {
+		log.Println("Error writing to db.txt:", err)
+		session.ChannelMessageSend(message.ChannelID, "Произошла ошибка при записи в файл.")
+		return
+	}
+
+	session.ChannelMessageSend(message.ChannelID, "Напоминание с именем '"+nameToDelete+"' успешно удалено.")
+}

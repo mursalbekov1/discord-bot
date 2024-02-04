@@ -51,8 +51,8 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 			"Этот бот умеет ставить напоминалки с различными задачами и временем напоминания. \n\n "+
 			"Основные команды: \n"+
 			"!remind - 'имя напоминания' : 'текст напоминания' : 'время напоминания' ✅\n"+
-			"!remindList - список моих напоминаний 📄\n"+
-			"!remindDelete - удалить напоминание по имени -> 'имя' ❌")
+			"!list - список моих напоминаний 📄\n"+
+			"!delete - удалить напоминание по имени -> 'имя' ❌")
 	case strings.HasPrefix(message.Content, "!remind"):
 		isValid, name, description, remindTime := saveReminder(message, message.Content)
 		if isValid {
@@ -64,7 +64,16 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 				return
 			}
 
-			durationUntilReminder := reminderTimeParsed.Sub(time.Now())
+			currentTime := time.Now()
+
+			reminderTimeParsed = time.Date(currentTime.Year(), currentTime.Month(), currentTime.Day(), reminderTimeParsed.Hour(), reminderTimeParsed.Minute(), 0, 0, currentTime.Location())
+
+			durationUntilReminder := reminderTimeParsed.Sub(currentTime)
+
+			if durationUntilReminder <= 0 {
+				session.ChannelMessageSend(message.ChannelID, "Неверное время напоминания.")
+				return
+			}
 
 			go func() {
 				<-time.After(durationUntilReminder)
@@ -76,7 +85,13 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		}
 	case message.Content == "!list":
 		listOfReminders(session, message)
-	case strings.HasPrefix(message.Content, "!remindCancel"):
-		session.ChannelMessageSend(message.ChannelID, "")
+	case strings.HasPrefix(message.Content, "!delete"):
+		parts := strings.Fields(message.Content)
+		log.Println(len(parts))
+		if len(parts) == 2 {
+			deleteReminder(session, message, parts[1])
+		} else {
+			session.ChannelMessageSend(message.ChannelID, "Используйте !delete <Имя напоминания>")
+		}
 	}
 }
