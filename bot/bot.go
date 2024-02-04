@@ -6,7 +6,9 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 )
 
 func checkNilErr(e error) {
@@ -43,19 +45,38 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		return
 	}
 
-	switch message.Content {
-	case "!info":
+	switch {
+	case strings.HasPrefix(message.Content, "!info"):
 		session.ChannelMessageSend(message.ChannelID, "Привет! Это бот напоминатель! ✏📄\n"+
 			"Этот бот умеет ставить напоминалки с различными задачами и временем напоминания. \n\n "+
 			"Основные команды: \n"+
 			"!remind - 'имя напоминания' : 'текст напоминания' : 'время напоминания' ✅\n"+
-			"!remindList - список моих напоминании 📄\n"+
+			"!remindList - список моих напоминаний 📄\n"+
 			"!remindDelete - удалить напоминание по имени -> 'имя' ❌")
-	case "!remind":
-		session.ChannelMessageSend(message.ChannelID, "Введите имя, текст и время напоминания, разделенные двоеточием. Например: 'Сон:Нужно ложиться спать: 22:00' ✏📄")
-	case "!remindList":
-		session.ChannelMessageSend(message.ChannelID, "")
-	case "!remindCancel":
+	case strings.HasPrefix(message.Content, "!remind"):
+		isValid, name, description, remindTime := saveReminder(message, message.Content)
+		if isValid {
+			session.ChannelMessageSend(message.ChannelID, "Напоминание установлено!")
+
+			reminderTimeParsed, err := time.Parse("15:04", remindTime)
+			if err != nil {
+				session.ChannelMessageSend(message.ChannelID, "Неверный формат времени.")
+				return
+			}
+
+			durationUntilReminder := reminderTimeParsed.Sub(time.Now())
+
+			go func() {
+				<-time.After(durationUntilReminder)
+
+				session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Напоминание: %s - %s", name, description))
+			}()
+		} else {
+			session.ChannelMessageSend(message.ChannelID, "Неверный формат напоминания.")
+		}
+	case message.Content == "!list":
+		listOfReminders(session, message)
+	case strings.HasPrefix(message.Content, "!remindCancel"):
 		session.ChannelMessageSend(message.ChannelID, "")
 	}
 }
